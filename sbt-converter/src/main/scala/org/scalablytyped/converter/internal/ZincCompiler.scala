@@ -107,8 +107,8 @@ object ZincCompiler {
 
     val scalaCompiler   = resolve(v.scala.compiler)
     val scalaLibrary    = resolve(v.scala.library)
-    val runtime         = resolve(v.scalaJs.library.concrete(v))
-    val scalaJsCompiler = resolve(v.scalaJs.compiler.concrete(v))
+    val runtime         = resolve(v.scalaJsLibrary.concrete(v))
+    val scalaJsCompiler = v.scalaJsCompiler.map(x => resolve(x.concrete(v))).toList.flatten
     val allJars         = scalaCompiler ++ runtime ++ scalaLibrary ++ scalaJsCompiler
 
     val st      = state.value

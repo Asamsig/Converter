@@ -46,7 +46,7 @@ object ContentSbtProject {
     }
 
     val pluginsSbt = IArray
-      .fromOptions(Some(versions.scalaJs.sbtPlugin), publisherOpt.map(_.sbtPlugin))
+      .fromOptions(Some(versions.scalaJs.sbtPlugin), publisherOpt.map(_.sbtPlugin), versions.scala.sbtDotty)
       .map(dep => s"addSbtPlugin(${dep.asSbt})")
       .mkString("", "\n", "\n")
 

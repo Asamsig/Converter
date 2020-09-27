@@ -9,6 +9,9 @@ sealed trait Dep {
   def org:     String
   def version: String
 
+  def withDottyCompat(isDotty: Boolean): Dep =
+    if (isDotty) Dep.DottyCompat(this) else this
+
   def asSbt: String =
     this match {
       case Dep.Mangled(_, dep) =>
@@ -21,6 +24,8 @@ sealed trait Dep {
         s"${quote(org)} %%% ${quote(artifact)} % ${quote(version)}"
       case Dep.ScalaFullVersion(_, artifact, _) =>
         s"${quote(org)} % ${quote(artifact)} % ${quote(version)} cross CrossVersion.Full()"
+      case Dep.DottyCompat(dep) =>
+        dep.asSbt + """ withDottyCompat "2.13.3""""
     }
 
   def concrete(versions: Versions): Dep.Concrete =
@@ -29,9 +34,10 @@ sealed trait Dep {
       case Dep.Scala(_, artifact, _) =>
         Dep.Mangled(s"${artifact}_${versions.scala.binVersion}", this)
       case Dep.ScalaJs(_, artifact, _) =>
-        Dep.Mangled(versions.sjs(artifact), this)
+        Dep.Mangled(s"${artifact}_sjs${versions.scalaJs.scalaJsBinVersion}_${versions.scala.binVersion}", this)
       case Dep.ScalaFullVersion(_, artifact, _) =>
         Dep.Mangled(s"${artifact}_${versions.scala.scalaVersion}", this)
+      case Dep.DottyCompat(dep) => dep.concrete(versions.copy(scala = Versions.Scala213))
     }
 }
 
@@ -65,6 +71,10 @@ object Dep {
 
   case class Java(org: String, name: String, version: String) extends Concrete {
     override def mangledArtifact: String = name
+  }
+  case class DottyCompat(dep: Dep) extends Dep {
+    override def org:     String = dep.org
+    override def version: String = dep.version
   }
   case class Scala(org:            String, name: String, version: String) extends Dep
   case class ScalaFullVersion(org: String, name: String, version: String) extends Dep
